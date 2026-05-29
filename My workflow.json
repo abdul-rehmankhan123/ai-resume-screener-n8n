@@ -1,0 +1,224 @@
+{
+  "name": "My workflow",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "resume-screen",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "a20476a5-5955-47c2-9f75-44121801d4f6",
+      "name": "Webhook",
+      "webhookId": "e9eda547-57b4-4367-bb75-dc91237f92bd"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://generativelanguage.googleapis.com/v1/models/gemini-2.5-flash:generateContent?key=AIzaSyC6TVHm8MElBrTXWlZDX08M0p_O8KD4Ask",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "key",
+              "value": "AIzaSyC6TVHm8MElBrTXWlZDX08M0p_O8KD4Ask"
+            }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "=Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "raw",
+        "body": "={\n  \"contents\": [\n    {\n      \"parts\": [\n        {\n          \"text\": \"Analyze this resume:\\n\\n{{$json.text}}\\n\\nReturn ONLY JSON.\"\n        }\n      ]\n    }\n  ]\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        416,
+        0
+      ],
+      "id": "350f6c8d-fd82-49c5-8daf-795e64685aeb",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "jsCode": "let text =\n  $json.candidates?.[0]?.content?.parts?.[0]?.text || \"\";\n\n// remove markdown\ntext = text\n  .replace(/```json/gi, \"\")\n  .replace(/```/g, \"\")\n  .trim();\n\nlet data;\n\ntry {\n  data = JSON.parse(text);\n} catch (e) {\n  return [\n    {\n      json: {\n        error: \"JSON parse failed\",\n        rawText: text\n      }\n    }\n  ];\n}\n\n// 👇 REAL PATH (from your data)\nconst contact = data.contact_information || {};\n\nreturn [\n  {\n    json: {\n      name: contact.name || \"\",\n      email: contact.email || \"\",\n      skills: Object.values(data.technical_skills_analysis?.skills || {}).flat().join(\", \"),\n      score: 0\n    }\n  }\n];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        624,
+        0
+      ],
+      "id": "085684a8-e1ea-4c00-9422-91cea6b2fddd",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1VuoV3ChRm_hjhgZVl762xwG_EiG41f0hf00dgr1tIkI",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Sheet1",
+          "mode": "name"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Name": "={{$json.name}}",
+            "Email": "={{$json.email}}\n",
+            "Skills": "={{$json.skills}}",
+            "Score": "={{$json.score}}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Name",
+              "displayName": "Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Email",
+              "displayName": "Email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Skills",
+              "displayName": "Skills",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Score",
+              "displayName": "Score",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        1040,
+        -96
+      ],
+      "id": "1b9b5bff-e2a7-48f4-b6c1-2a7bb0a0876a",
+      "name": "Append row in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "ojhwQvpBdzlEvHZR",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "pdf",
+        "binaryPropertyName": "resume",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1.1,
+      "position": [
+        208,
+        0
+      ],
+      "id": "13725618-9d78-4705-9653-ebb58aa09e64",
+      "name": "Extract from File"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Extract from File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "Append row in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract from File": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "5adc5c2e-c316-4a9c-8a79-7cd3914ea9c4",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "2df15e69c4b26ca1c37226d30dbe826775890723b27d8c8a61788f77f87122dd"
+  },
+  "id": "aM7SdW3bgrleYew9",
+  "tags": []
+}
