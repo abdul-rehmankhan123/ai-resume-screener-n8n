@@ -20,13 +20,13 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "https://generativelanguage.googleapis.com/v1/models/gemini-2.5-flash:generateContent?key=AIzaSyC6TVHm8MElBrTXWlZDX08M0p_O8KD4Ask",
+        "url": "https://generativelanguage.googleapis.com/v1/models/gemini-2.5-flash:generateContent?key=",
         "sendQuery": true,
         "queryParameters": {
           "parameters": [
             {
               "name": "key",
-              "value": "AIzaSyC6TVHm8MElBrTXWlZDX08M0p_O8KD4Ask"
+              "value": ""
             }
           ]
         },
